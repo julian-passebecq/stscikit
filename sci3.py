@@ -1,104 +1,87 @@
-# Importation des bibliothèques nécessaires
+
 import streamlit as st
 import pandas as pd
-import numpy as np
-from sklearn import datasets
-from sklearn.tree import DecisionTreeClassifier, plot_tree
-import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import LabelEncoder
-from scipy import stats
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import SVC
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, r2_score
+from scipy.stats import f_oneway
+import numpy as np
+import seaborn as sns
 
-# Fonction principale de l'application Streamlit
-def main():
-    # Titre de la page
-    st.title("Exploration de Data Science et Machine Learning")
+st.title('Machine Learning sur la feuille GPT')
+
+st.write("Modèle utilisé : RandomForestRegressor")
+st.write("Pourcentage des données utilisé en entraînement : 80%")
+st.write("Pourcentage des données utilisé en test : 20%")
+
+# Upload du fichier Excel
+uploaded_file = st.file_uploader("Choisissez un fichier Excel", type=["xlsx"])
+
+if uploaded_file is not None:
+    # Lecture du fichier Excel et de la feuille GPT
+    df = pd.read_excel(uploaded_file, sheet_name='GPT')
     
-    # Sélection du dataset
-    option = st.selectbox('Quel dataset voulez-vous explorer?', ('Iris', 'Diabetes', 'Wine', 'Breast Cancer'))
-    st.write(f"Vous avez sélectionné le dataset {option}")
-
-    if option == 'Iris':
-        # Chargement des données
-        iris = datasets.load_iris()
-        df = pd.DataFrame(data= np.c_[iris['data'], iris['target']], columns= iris['feature_names'] + ['target'])
-        
-        # Statistiques descriptives
-        st.subheader("Statistique Descriptive")
-        st.write(df.describe())
-        
-        # EDA : Pairplot
-        st.subheader("Analyse Exploratoire de Données (EDA) via Pairplot")
-        sns.pairplot(df, hue="target")
-        plt.savefig("pairplot.png")
-        st.image("pairplot.png")
-        
-        # ANOVA
-        st.subheader("Analyse de Variance (ANOVA)")
-        fvalue, pvalue = stats.f_oneway(df['sepal length (cm)'], df['sepal width (cm)'], df['petal length (cm)'], df['petal width (cm)'])
-        st.write("F-value:", fvalue)
-        st.write("P-value:", pvalue)
-        st.write("Si la valeur F est grande et la valeur p est petite (généralement moins de 0.05), cela signifie que les groupes sont statistiquement différents.")
-        sns.boxplot(data=df.iloc[:, :-1])
-        plt.title('Boxplot de toutes les caractéristiques')
-        plt.savefig("anova_boxplot.png")
-        st.image("anova_boxplot.png")
-        
-        # Boxplots
-        st.subheader("Boxplots pour chaque caractéristique en fonction de la classe")
-        plt.figure(figsize=(12, 6))
-        sns.boxplot(x='target', y='sepal length (cm)', data=df)
-        plt.savefig("boxplot.png")
-        st.image("boxplot.png")
-        
-        # Encodage et calcul de la corrélation
-        st.subheader("Encodage des variables catégorielles et corrélation")
+    # Visualisation des données
+    st.subheader("Visualisation des données")
+    st.write(df.head())
+    
+    # Suppression des lignes où les valeurs cibles sont manquantes
+    df.dropna(subset=['PaymentDuration', '%Paiements', 'NombrePaimentClient'], inplace=True)
+    
+    # Gestion des valeurs manquantes
+    df.fillna(0, inplace=True)
+    
+    # Conversion des colonnes problématiques en chaînes de caractères
+    for col in ['Division', 'ProjectManager', 'OrganizationName']:
+        df[col] = df[col].astype(str)
+    
+    # Encodage des variables catégorielles
+    for col in ['Division', 'ProjectManager', 'OrganizationName']:
         le = LabelEncoder()
-        df['target'] = le.fit_transform(df['target'])
-        st.write(df.corr())
-        
-        # Utilisation d'un modèle d'arbre de décision
-        st.subheader("Utilisation d'un arbre de décision")
-        X = df.drop('target', axis=1)
-        y = df['target']
-        clf = DecisionTreeClassifier(random_state=42)
-        clf.fit(X, y)
-        st.write('Score avec les données d\'entraînement:', clf.score(X, y))
-
-        # Visualisation de l'arbre de décision
-        st.subheader("Visualisation de l'arbre de décision")
-        plt.figure(figsize=(20, 10))
-        plot_tree(clf, filled=True, feature_names=iris['feature_names'], class_names=[str(i) for i in iris['target_names']])
-        plt.savefig("decision_tree.png")
-        st.image("decision_tree.png")
-        
-        # Utilisation de la forêt aléatoire
-        st.subheader("Utilisation de la forêt aléatoire")
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-        rf = RandomForestClassifier()
-        rf.fit(X_train, y_train)
-        st.write('Score de la forêt aléatoire:', rf.score(X_test, y_test))
-        st.write("La forêt aléatoire utilise plusieurs arbres de décision pour prendre une décision. Cela aide souvent à améliorer les performances et à réduire le surajustement.")
-        st.write("Matrice de confusion :")
-        y_pred = rf.predict(X_test)
-        st.write(confusion_matrix(y_test, y_pred))
-        st.write("Rapport de classification :")
-        st.write(classification_report(y_test, y_pred))
-        
-        # Autres algorithmes de ML
-        st.subheader("Autres algorithmes de machine learning")
-        lr = LogisticRegression()
-        lr.fit(X_train, y_train)
-        st.write('Score de la régression logistique:', lr.score(X_test, y_test))
-        svm = SVC()
-        svm.fit(X_train, y_train)
-        st.write('Score du SVM:', svm.score(X_test, y_test))
-
-# Point d'entrée de l'application
-if __name__ == '__main__':
-    main()
+        df[col] = le.fit_transform(df[col])
+    
+    # Séparation des features et des targets
+    features = ['InvoiceAmount', 'DuePeriod', 'PaymentDuration', '%Paiements', 'NombrePaimentClient', 'Division', 'ProjectManager', 'OrganizationName']
+    targets = ['PaymentDuration', '%Paiements', 'NombrePaimentClient']
+    
+    X = df[features]
+    y = df[targets]
+    
+    # Séparation des données en ensembles d'entraînement et de test
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Normalisation des données
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+    
+    # Entraînement des modèles
+    models = {}
+    for target in targets:
+        model = RandomForestRegressor(random_state=42)
+        model.fit(X_train_scaled, y_train[target])
+        models[target] = model
+    
+    # Évaluation des modèles
+    st.subheader("Évaluation des modèles")
+    evaluation_metrics = {}
+    for target, model in models.items():
+        y_pred = model.predict(X_test_scaled)
+        mse = mean_squared_error(y_test[target], y_pred)
+        r2 = r2_score(y_test[target], y_pred)
+        evaluation_metrics[target] = {'MSE': mse, 'R2': r2}
+    
+    st.write("Métriques d'évaluation des modèles :", evaluation_metrics)
+    
+    # Analyse ANOVA
+    st.subheader("Analyse ANOVA")
+    for target in targets:
+        anova_results = []
+        for feature in features:
+            groups = [y[target][X[feature] == unique_val] for unique_val in X[feature].unique()]
+            f_val, p_val = f_oneway(*groups)
+            anova_results.append({'Feature': feature, 'F-value': f_val, 'P-value': p_val})
+        st.write(f"Résultats de l'ANOVA pour {target}:")
+        st.write(pd.DataFrame(anova_results))
