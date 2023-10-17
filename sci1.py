@@ -36,8 +36,9 @@ def main():
 
         # Part 3: EDA
         st.subheader("Analyse Exploratoire de Données (EDA)")
+        fig, ax = plt.subplots()
         sns.pairplot(df, hue="target")
-        st.pyplot()
+        st.pyplot(fig)
 
         # Part 4: ANOVA
         st.subheader("Analyse de Variance (ANOVA)")
@@ -47,8 +48,9 @@ def main():
 
         # Part 5: Boxplots groupés
         st.subheader("Boxplots Groupés")
+        fig, ax = plt.subplots()
         sns.boxplot(x='target', y='sepal length (cm)', data=df)
-        st.pyplot()
+        st.pyplot(fig)
 
         # Part 6: Encodage et corrélation
         st.subheader("Encodage des variables catégorielles et calcul de la corrélation")
