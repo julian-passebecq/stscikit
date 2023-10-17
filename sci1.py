@@ -16,71 +16,75 @@ from sklearn.svm import SVC
 # Fonction principale de l'application Streamlit
 def main():
 
-    # Page d'accueil
+    # Titre de la page
     st.title("Exploration de Data Science et Machine Learning")
     
+    # Sélection du dataset
     option = st.selectbox(
         'Quel dataset voulez-vous explorer?',
-        ('Iris', 'Diabetes', 'Wine', 'Breast Cancer'))
-
+        ('Iris', 'Diabetes', 'Wine', 'Breast Cancer')
+    )
     st.write(f"Vous avez sélectionné le dataset {option}")
 
+    # Chargement du dataset Iris
     if option == 'Iris':
-        # Part 1: Charger le dataset
+        
+        # Partie 1: Chargement du dataset
         iris = datasets.load_iris()
         df = pd.DataFrame(data= np.c_[iris['data'], iris['target']], columns= iris['feature_names'] + ['target'])
-
-        # Part 2: Statistique Descriptive
+        
+        # Partie 2: Statistique Descriptive
         st.subheader("Statistique Descriptive")
         st.write(df.describe())
-
-        # Part 3: EDA
+        
+        # Partie 3: EDA
         st.subheader("Analyse Exploratoire de Données (EDA)")
         fig, ax = plt.subplots()
         sns.pairplot(df, hue="target")
         st.pyplot(fig)
-
-        # Part 4: ANOVA
+        
+        # Partie 4: ANOVA
         st.subheader("Analyse de Variance (ANOVA)")
         fvalue, pvalue = stats.f_oneway(df['sepal length (cm)'], df['sepal width (cm)'], df['petal length (cm)'], df['petal width (cm)'])
         st.write("F-value:", fvalue)
         st.write("P-value:", pvalue)
-
-        # Part 5: Boxplots groupés
+        
+        # Partie 5: Boxplots groupés
         st.subheader("Boxplots Groupés")
         fig, ax = plt.subplots()
         sns.boxplot(x='target', y='sepal length (cm)', data=df)
         st.pyplot(fig)
-
-        # Part 6: Encodage et corrélation
+        
+        # Partie 6: Encodage et corrélation
         st.subheader("Encodage des variables catégorielles et calcul de la corrélation")
         le = LabelEncoder()
         df['target'] = le.fit_transform(df['target'])
         st.write(df.corr())
-
-        # Part 7: Arbre de décision
+        
+        # Partie 7: Arbre de décision
         st.subheader("Utilisation d'un arbre de décision")
         X = df.drop('target', axis=1)
         y = df['target']
         clf = DecisionTreeClassifier()
         clf.fit(X, y)
         st.write('Score:', clf.score(X, y))
-
-        # Part 8: Algorithmes de ML
+        
+        # Partie 8: Algorithmes de ML
         st.subheader("Différents types d'algorithmes de machine learning")
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
         
         lr = LogisticRegression()
         lr.fit(X_train, y_train)
         st.write('Score de la régression logistique:', lr.score(X_test, y_test))
-
+        
         rf = RandomForestClassifier()
         rf.fit(X_train, y_train)
         st.write('Score de la forêt aléatoire:', rf.score(X_test, y_test))
-
+        
         svm = SVC()
         svm.fit(X_train, y_train)
         st.write('Score du SVM:', svm.score(X_test, y_test))
 
+# Point d'entrée
 if __name__ == '__main__':
     main()
