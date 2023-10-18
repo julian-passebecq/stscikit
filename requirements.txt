@@ -6,4 +6,4 @@ scipy
 seaborn
 matplotlib
 pandas_profiling
-streamlit_pandas_profilin
+streamlit_pandas_profiling
